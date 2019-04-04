@@ -1,22 +1,18 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
 import { User, UserListData } from '../../models/user.model';
 import { Subject, BehaviorSubject, of, merge } from 'rxjs';
 import { PageQuery } from 'src/app/models/page-query.model';
 import { filter, tap, switchMap, takeUntil } from 'rxjs/operators';
 import { UserService } from '../services/user-service.service';
+import { MatPaginator } from '@angular/material/paginator';
 
 @Component({
   selector: 'ntw-user-list',
   templateUrl: './user-list.component.html',
   styleUrls: ['./user-list.component.scss']
 })
-export class UserListComponent implements OnInit, OnDestroy {
-  user: User = {
-    id: 1,
-    first_name: 'George',
-    last_name: 'Bluth',
-    avatar: 'https://s3.amazonaws.com/uifaces/faces/twitter/calebogden/128.jp'
-  };
+export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
+  @ViewChild(MatPaginator) paginator: MatPaginator;
 
   pageQuery: PageQuery = {
     pageIndex: 1,
@@ -38,23 +34,39 @@ export class UserListComponent implements OnInit, OnDestroy {
     this.destroy$.next();
   }
 
+  ngAfterViewInit() {
+
+    this.paginator.page
+      .pipe(
+        tap(() => this.changePage()),
+        takeUntil(this.destroy$)
+      )
+      .subscribe();
+
+
+}
+
   loadUsers(page: PageQuery) {
     const userList = this.getUserFromCache(page);
     const getUsersFromCache$ = of(userList).pipe(
-      tap(val => console.log(val)),
       filter(val => userList.length === page.pageSize ||
-                    (this.userListData && this.userListData.total_pages === page.pageIndex)),
+        (this.userListData && this.userListData.total_pages === page.pageIndex)),
+      // tap(val => console.log(val)),
       tap(val => this._userListSub$.next(val))
     );
 
     const getUsersFromServer$ = of(userList).pipe(
-      tap(val => console.log('server', val)),
       filter(val => userList.length === 0 || !this.userListData || !this.userListData.total_pages ||
                     (this.userListData.total_pages && this.userListData.total_pages === page.pageIndex)),
+      // tap(val => console.log('server', val)),
       switchMap(val => {
         return this.userService.getUserList(page.pageIndex);
       }),
-      tap(val => this._userListSub$.next(val.data))
+      tap(val => {
+        this.userListData = val;
+        this._userListSub$.next(val.data);
+        this.userList = this.userList.concat(val.data);
+      })
     );
 
     const loadUserList = merge(getUsersFromCache$, getUsersFromServer$).pipe(
@@ -63,11 +75,24 @@ export class UserListComponent implements OnInit, OnDestroy {
 
   }
 
+
+
   getUserFromCache(page: PageQuery) {
-    const start = page.pageIndex * page.pageSize,
+    const start = (page.pageIndex - 1) * page.pageSize,
           end = start + page.pageSize;
 
     return this.userList.slice(start, end);
+  }
+
+  changePage() {
+
+    const newPage: PageQuery = {
+      pageIndex: this.paginator.pageIndex + 1,
+      pageSize: this.paginator.pageSize
+    };
+
+    this.loadUsers(newPage);
+
   }
 
 }
