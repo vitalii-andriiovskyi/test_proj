@@ -1,5 +1,12 @@
 .user-list {
   display: grid;
   grid-gap: 30px;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr))
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  padding-top: 40px;
+}
+
+.mat-paginator {
+  max-width: 400px;
+  margin: 40px auto 0;
+  font-size: 16px;
 }

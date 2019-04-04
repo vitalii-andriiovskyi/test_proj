@@ -9,3 +9,6 @@
     <ntw-user-preview [user]="user"></ntw-user-preview>
   </div> -->
 </div>
+<mat-paginator 
+  [length]="userListData?.total" 
+  [pageSize]="userListData?.per_page || pageQuery.pageSize"></mat-paginator>
