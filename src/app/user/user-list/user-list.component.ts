@@ -49,8 +49,8 @@ export class UserListComponent implements OnInit, OnDestroy {
 
     const getUsersFromServer$ = of(userList).pipe(
       tap(val => console.log('server', val)),
-      filter(val => userList.length === 0 || !this.userListData ||
-                    (this.userListData && this.userListData.total_pages === page.pageIndex)),
+      filter(val => userList.length === 0 || !this.userListData || !this.userListData.total_pages ||
+                    (this.userListData.total_pages && this.userListData.total_pages === page.pageIndex)),
       switchMap(val => {
         return this.userService.getUserList(page.pageIndex);
       }),
@@ -69,12 +69,5 @@ export class UserListComponent implements OnInit, OnDestroy {
 
     return this.userList.slice(start, end);
   }
-
-  // private _hasUsersAccordingToFilters(page: PageQuery, users: User[],  userListData: UserListData): boolean {
-    
-  //   const countRecipesRequested = (page.pageIndex + 1) * page.pageSize;
-  //   const result = Math.min(userListData.total, countRecipesRequested) <= users.length;
-  //   return result;
-  // }
 
 }
