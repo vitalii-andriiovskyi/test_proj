@@ -1,13 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import { User } from '../models/user.model';
+import { User } from '../../models/user.model';
 
 @Component({
-  selector: 'ntw-user-detail',
-  templateUrl: './user-detail.component.html',
-  styleUrls: ['./user-detail.component.scss']
+  selector: 'ntw-user-list',
+  templateUrl: './user-list.component.html',
+  styleUrls: ['./user-list.component.scss']
 })
-export class UserDetailComponent implements OnInit {
-
+export class UserListComponent implements OnInit {
   user: User = {
     id: 1,
     first_name: 'George',
