@@ -1,0 +1,17 @@
+@import '~@angular/material/theming';
+
+.user-card {
+  position: relative;
+  max-width: 300px;
+  &:hover {
+    @include mat-elevation(6);
+  }
+}
+
+.user-link {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}

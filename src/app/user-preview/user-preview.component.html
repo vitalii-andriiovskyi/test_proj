@@ -1,3 +1,12 @@
-<p>
-  user-preview works!
-</p>
+<mat-card class="user-card">
+  <mat-card-header>
+    <div mat-card-avatar class="example-header-image">
+    <img [src]="user.avatar">
+  </div>
+    <mat-card-title>{{user.first_name}}</mat-card-title>
+    <mat-card-subtitle>{{user.last_name}}</mat-card-subtitle>
+  </mat-card-header>
+  <mat-card-actions>
+    <a [routerLink]="['user', user.id]" class="user-link"></a>
+  </mat-card-actions>
+</mat-card>
