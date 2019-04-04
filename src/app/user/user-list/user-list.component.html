@@ -1,1 +1,11 @@
-<ntw-user-preview [user]="user"></ntw-user-preview>
+<div class="user-list">
+  <div class="user-item" *ngFor="let user of userList$ | async">
+    <ntw-user-preview [user]="user"></ntw-user-preview>
+  </div>
+  <!-- <div class="user-item">
+    <ntw-user-preview [user]="user"></ntw-user-preview>
+  </div>
+  <div class="user-item">
+    <ntw-user-preview [user]="user"></ntw-user-preview>
+  </div> -->
+</div>
