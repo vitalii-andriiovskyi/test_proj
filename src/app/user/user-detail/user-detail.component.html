@@ -1,6 +1,11 @@
 <ng-container *ngIf="(user$ | async)?.data as user; else fallback">
   <h1>{{user.first_name}} {{user.last_name}}</h1>
-  <img [src]="user.avatar">
+  <div class="content">
+    <img [src]="user.avatar">
+  </div>
+  <div class="action-container">
+    <a mat-raised-button color="accent" [routerLink]="[previousUrl]">Back</a>
+  </div>
 </ng-container>
 <ng-template #fallback>
   <p>Loading...</p>
