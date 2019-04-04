@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular
 import { User, UserListData } from '../../models/user.model';
 import { Subject, BehaviorSubject, of, merge } from 'rxjs';
 import { PageQuery } from 'src/app/models/page-query.model';
-import { filter, tap, switchMap, takeUntil } from 'rxjs/operators';
+import { filter, tap, switchMap, takeUntil, map } from 'rxjs/operators';
 import { UserService } from '../services/user-service.service';
 import { MatPaginator } from '@angular/material/paginator';
 
@@ -20,8 +20,8 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
   };
 
   destroy$ = new Subject();
-  userList: User[] = [];
-  private _userListSub$ = new BehaviorSubject(this.userList);
+  userListCache: User[] = [];
+  private _userListSub$ = new BehaviorSubject(this.userListCache);
   userList$ = this._userListSub$.asObservable();
   userListData: UserListData;
   constructor(private userService: UserService) { }
@@ -47,25 +47,28 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
 }
 
   loadUsers(page: PageQuery) {
-    const userList = this.getUserFromCache(page);
-    const getUsersFromCache$ = of(userList).pipe(
-      filter(val => userList.length === page.pageSize ||
-        (this.userListData && this.userListData.total_pages === page.pageIndex)),
-      // tap(val => console.log(val)),
+    const total: number = (this.userListData && this.userListData.total) || 1;
+
+    const getUsersFromCache$ = of(page).pipe(
+      map(this._countEntitiesRequested(total)),
+      filter(this._isEntitiesRequested(this.userListCache)),
+      // tap(val => console.log('cache case', val)),
+      map(() => this.getUsersFromCache(this.userListCache, page)),
       tap(val => this._userListSub$.next(val))
     );
 
-    const getUsersFromServer$ = of(userList).pipe(
-      filter(val => userList.length === 0 || !this.userListData || !this.userListData.total_pages ||
-                    (this.userListData.total_pages && this.userListData.total_pages === page.pageIndex)),
-      // tap(val => console.log('server', val)),
-      switchMap(val => {
+    const getUsersFromServer$ = of(page).pipe(
+      map(this._countEntitiesRequested(total)),
+      map(this._isEntitiesRequested(this.userListCache)),
+      filter(val => !val),
+      // tap(val => console.log('server case', val)),
+      switchMap(() => {
         return this.userService.getUserList(page.pageIndex);
       }),
       tap(val => {
         this.userListData = val;
         this._userListSub$.next(val.data);
-        this.userList = this.userList.concat(val.data);
+        this.userListCache = this.userListCache.concat(val.data);
       })
     );
 
@@ -77,11 +80,11 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
 
 
 
-  getUserFromCache(page: PageQuery) {
+  getUsersFromCache(entities: User[], page: PageQuery): User[] {
     const start = (page.pageIndex - 1) * page.pageSize,
           end = start + page.pageSize;
 
-    return this.userList.slice(start, end);
+    return entities.slice(start, end);
   }
 
   changePage() {
@@ -94,5 +97,18 @@ export class UserListComponent implements OnInit, OnDestroy, AfterViewInit {
     this.loadUsers(newPage);
 
   }
+
+  private _hasEntitiesInCache(pageQuery: PageQuery, entityList: User[], totalEntities: number): boolean {
+    const countEntitiesRequested = (pageQuery.pageIndex + 1) * pageQuery.pageSize;
+    const result = Math.min(totalEntities, countEntitiesRequested) <= entityList.length;
+    return result;
+  }
+
+  private _countEntitiesRequested = (totalEntities: number) => (pageQuery: PageQuery) => {
+    const entitiesRequested = (pageQuery.pageIndex + 1) * pageQuery.pageSize;
+    return Math.min(totalEntities, entitiesRequested);
+  }
+
+  private _isEntitiesRequested = (entityList: User[]) => (entitiesRequestied: number) => entitiesRequestied <= entityList.length;
 
 }
